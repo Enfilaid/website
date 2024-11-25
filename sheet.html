@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Daten anzeigen</title>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+</head>
+<body>
+    <h1>Google Sheets Daten</h1>
+    <table id="googleSheetTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Spalte 1</th>
+                <th>Spalte 2</th>
+                <th>Spalte 3</th>
+                <th>Spalte 4</th>
+                <th>Spalte 5</th>
+                <th>Datum</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        // Deine Google Sheets CSV-URL
+        const sheetCSVUrl = 'https://docs.google.com/spreadsheets/d/1akOn_8vNRdqeClJUOONxlP7anKexVUoFjIUn_Q8Wy1U/gviz/tq?tqx=out:csv';
+
+        async function fetchCSVData(url) {
+            const response = await fetch(url);
+            const csvText = await response.text();
+            return parseCSV(csvText);
+        }
+
+        function parseCSV(csvText) {
+            const rows = csvText.split('\n');
+            return rows.map(row => row.split(','));
+        }
+
+        function renderTable(data) {
+            const rows = data.slice(1); // Entferne die Kopfzeile (erste Zeile)
+
+            // Alte Inhalte entfernen (falls aktualisiert wird)
+            $('#googleSheetTable tbody').empty();
+
+            // Füge die Daten zur Tabelle hinzu
+            rows.forEach(row => {
+                $('#googleSheetTable tbody').append(`
+                    <tr>
+                        <td>${row[0]}</td>
+                        <td>${row[1]}</td>
+                        <td>${row[2]}</td>
+                        <td>${row[3]}</td>
+                        <td>${row[4]}</td>
+                        <td>${row[5]}</td>
+                    </tr>
+                `);
+            });
+
+            // DataTable initialisieren oder aktualisieren
+            if (!$.fn.dataTable.isDataTable('#googleSheetTable')) {
+                $('#googleSheetTable').DataTable({
+                    order: [[5, 'desc']], // Standardmäßig nach Datum sortiert (neu -> alt)
+                    columnDefs: [
+                        { targets: [0, 1, 2, 3, 4], render: $.fn.dataTable.render.html() } // Links erlauben
+                    ]
+                });
+            } else {
+                $('#googleSheetTable').DataTable().draw(); // Tabelle neu zeichnen
+            }
+        }
+
+        // Daten abrufen und Tabelle rendern
+        fetchCSVData(sheetCSVUrl).then(data => renderTable(data));
+    </script>
+</body>
+</html>
